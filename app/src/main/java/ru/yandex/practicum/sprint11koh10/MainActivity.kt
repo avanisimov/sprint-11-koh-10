@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
-        val uri = Uri.parse("https://myserver.com:5051/api/v1/path?text=android&take=1#last")
+        val uri: Uri = Uri.parse("https://myserver.com:5051/api/v1/path?text=android&take=1#last")
 
         Log.d(TAG, "uri.scheme ${uri.scheme}")
         Log.d(TAG, "uri.host ${uri.host}")
@@ -35,7 +35,9 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "uri.pathSegments ${uri.pathSegments}")
         Log.d(TAG, "uri.lastPathSegment ${uri.lastPathSegment}")
         Log.d(TAG, "uri.queryParameterNames ${uri.queryParameterNames}")
+        Log.d(TAG, "uri.getQueryParameter(\"text\") ${uri.getQueryParameter("text")}")
         Log.d(TAG, "uri.fragment ${uri.fragment}")
+
 
         val itemsRv: RecyclerView = findViewById(R.id.items)
         itemsRv.adapter = adapter
@@ -46,6 +48,7 @@ class MainActivity : AppCompatActivity() {
                 GsonConverterFactory.create(
                     GsonBuilder()
                         .registerTypeAdapter(Date::class.java, CustomDateTypeAdapter())
+                        .registerTypeAdapter(NewsItem::class.java, NewsItemTypeAdapter())
                         .create()
                 )
             )
@@ -54,12 +57,14 @@ class MainActivity : AppCompatActivity() {
 
         serverApi.getNews1().enqueue(object : Callback<NewsResponse> {
             override fun onResponse(call: Call<NewsResponse>, response: Response<NewsResponse>) {
-                Log.d(TAG, "onResponse: ${response.body()}")
-                adapter.items = response.body()?.data?.items ?: emptyList()
+                Log.i(TAG, "onResponse: ${response.body()}")
+                adapter.items = response.body()?.data?.items?.filter {
+                    it !is NewsItem.Basic
+                } ?: emptyList()
             }
 
             override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
-                Log.d(TAG, "onFailure: $t")
+                Log.e(TAG, "onFailure: $t")
             }
 
         })
@@ -71,6 +76,6 @@ class MainActivity : AppCompatActivity() {
 interface Sprint11ServerApi {
 
 
-    @GET("main/jsons/news_1.json")
+    @GET("main/jsons/news_2.json")
     fun getNews1(): Call<NewsResponse>
 }
